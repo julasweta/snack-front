@@ -14,7 +14,9 @@
   margin: 0;
   padding: 0;
 }
-
+.game div {
+  border: none;
+}
 .game-container{
   margin-left: 10rem;
 

@@ -80,7 +80,7 @@ const SnakeGame: React.FC = () => {
       setSnake([...snake, {} as Point]);
       generateFood();
     }
-  }, [snake, food, score, foodType, generateFood]);
+  }, [snake,  score, foodType, generateFood]);
 
   const moveSnake = useCallback((): void => {
     const newSnake = [...snake];
@@ -120,25 +120,25 @@ const SnakeGame: React.FC = () => {
     }
   }, [isPaused, speed, moveSnake, checkCollision]);
 
-  const gameOver = async (): Promise<void> => {
+  const gameOver =  ():void => {
     try {
-      //await axios.post('http://localhost:5000/api/scores', { name: userName, score });
-      await dispatch(snackActions.createUser({ name: userName, score }))
+      dispatch(snackActions.createUser({ name: userName, score }))
       console.log('Score successfully posted!');
+      alert(`Game Over! Score - ${score}`);
+      setSnake([{ x: 10, y: 10 }]);
+      setFood({ x: 15, y: 15 });
+      setScore(0);
+      setFoodType(FoodType.ONE);
+      setDirection('RIGHT');
+      setIsPaused(true);
+      setSpeed(300);
+      setShowSpeed(300);
     } catch (error) {
       console.error('Error posting score:', error);
     }
 
-    alert(`Game Over! Score - ${score}`);
-    setSnake([{ x: 10, y: 10 }]);
-    setFood({ x: 15, y: 15 });
-    setScore(0);
-    setFoodType(FoodType.ONE);
-    setDirection('RIGHT');
-    setIsPaused(true);
-    setSpeed(300);
-    setShowSpeed(300);
     dispatch(snackActions.setIsGameOver())
+   
   };
 
   const startGame = (): void => {
@@ -174,7 +174,6 @@ const SnakeGame: React.FC = () => {
       <p>Speed: {showSpeed}</p>
       {isPaused ? (
         <button onClick={startGame}>Start Game</button>) : (<button onClick={() => setIsPaused(!isPaused)}>Pause</button>)}
-
 
     </div>
   );

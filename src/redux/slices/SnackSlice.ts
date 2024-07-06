@@ -32,6 +32,7 @@ const createUser = createAsyncThunk<IUser, IUser, { rejectValue: AxiosError }>(
   "usersSlice/createUser",
   async (data, { rejectWithValue }) => {
     try {
+      console.log('ya tyt');
       const response = await gameService.setUser(data);
       return response.data;
     } catch (e) {

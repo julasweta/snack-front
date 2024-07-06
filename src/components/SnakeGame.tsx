@@ -3,10 +3,8 @@ import { useAppDispatch } from '../hooks/hooks';
 import { snackActions } from '../redux/slices/SnackSlice';
 import { FoodType, Point } from '../interfaces/snack.interface';
 
-
-
 const SnakeGame: React.FC = () => {
-  const [snake, setSnake] = useState<Point[]>([{ x: 10, y: 10 },]);
+  const [snake, setSnake] = useState<Point[]>([{ x: 10, y: 10 }]);
   const [food, setFood] = useState<Point>({ x: 15, y: 15 });
   const [direction, setDirection] = useState<string>('RIGHT');
   const [isPaused, setIsPaused] = useState<boolean>(true);
@@ -14,10 +12,10 @@ const SnakeGame: React.FC = () => {
   const [speed, setSpeed] = useState<number>(300);
   const [showSpeed, setShowSpeed] = useState<number>(300);
   const [foodType, setFoodType] = useState<FoodType>(FoodType.ONE);
+  const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const userName = localStorage.getItem('userName');
   const dispatch = useAppDispatch();
 
-  //генерація типу їжі
   const generateFood = useCallback(() => {
     const newFoodX = Math.floor(Math.random() * 20);
     const newFoodY = Math.floor(Math.random() * 20);
@@ -32,7 +30,6 @@ const SnakeGame: React.FC = () => {
     }
   }, [foodType]);
 
-  // Обробник подій клавіш для зміни напрямку руху змійки
   const handleKeyDown = (e: KeyboardEvent): void => {
     switch (e.key) {
       case 'ArrowUp':
@@ -52,7 +49,23 @@ const SnakeGame: React.FC = () => {
     }
   };
 
+  const gameOver = useCallback(async (): Promise<void> => {
+    if (!isGameOver) {
+      setIsGameOver(true);
+      await dispatch(snackActions.createUser({ name: userName, score }));
 
+      setSnake([{ x: 10, y: 10 }]);
+      setFood({ x: 15, y: 15 });
+      setScore(0);
+      setFoodType(FoodType.ONE);
+      setDirection('RIGHT');
+      setIsPaused(true);
+      setSpeed(300);
+      setShowSpeed(300);
+      dispatch(snackActions.setIsGameOver());
+      console.log('Score successfully posted!');
+    }
+  }, [isGameOver, userName, score, dispatch]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
@@ -61,26 +74,22 @@ const SnakeGame: React.FC = () => {
     };
   }, [direction, isPaused]);
 
-
   const checkCollision = useCallback((): void => {
     const head = snake[0];
-    //зіткнення з стіною
     if (head.x < 0 || head.x >= 20 || head.y < 0 || head.y >= 20) {
       gameOver();
     }
-    //зіткнення з собою
     for (let i = 1; i < snake.length; i++) {
       if (head.x === snake[i].x && head.y === snake[i].y) {
         gameOver();
       }
     }
-    //зіткнення з їдою
     if (head.x === food.x && head.y === food.y) {
       setScore(score + foodType);
       setSnake([...snake, {} as Point]);
       generateFood();
     }
-  }, [snake,  score, foodType, generateFood]);
+  }, [snake, food, score, foodType, generateFood, gameOver]);
 
   const moveSnake = useCallback((): void => {
     const newSnake = [...snake];
@@ -108,9 +117,8 @@ const SnakeGame: React.FC = () => {
     setSnake(newSnake);
   }, [snake, direction]);
 
-  // Ефект для руху змійки та перевірки зіткнення
   useEffect(() => {
-    if (!isPaused) {
+    if (!isPaused && !isGameOver) {
       const interval = setInterval(() => {
         moveSnake();
         checkCollision();
@@ -118,66 +126,50 @@ const SnakeGame: React.FC = () => {
 
       return () => clearInterval(interval);
     }
-  }, [isPaused, speed, moveSnake, checkCollision]);
-
-  const gameOver =  ():void => {
-    try {
-      dispatch(snackActions.createUser({ name: userName, score }))
-      console.log('Score successfully posted!');
-      alert(`Game Over! Score - ${score}`);
-      setSnake([{ x: 10, y: 10 }]);
-      setFood({ x: 15, y: 15 });
-      setScore(0);
-      setFoodType(FoodType.ONE);
-      setDirection('RIGHT');
-      setIsPaused(true);
-      setSpeed(300);
-      setShowSpeed(300);
-    } catch (error) {
-      console.error('Error posting score:', error);
-    }
-
-    dispatch(snackActions.setIsGameOver())
-   
-  };
+  }, [isPaused, isGameOver, speed, moveSnake, checkCollision]);
 
   const startGame = (): void => {
     setIsPaused(false);
+    setIsGameOver(false); // Reset game over state when the game starts
   };
 
-
   const changeSpeedUp = (step: number) => {
-    setSpeed(300 - (50 * step));
-    setShowSpeed(300 + (50 * step));
-  }
+    setSpeed(300 - 50 * step);
+    setShowSpeed(300 + 50 * step);
+  };
 
   useEffect(() => {
     if (score > 50 || score > 100 || score > 150 || score > 200 || score > 250 || score > 300) {
-      changeSpeedUp(Math.floor(score / 50))
+      changeSpeedUp(Math.floor(score / 50));
     }
-
-  }, [speed, score]);
+  }, [score]);
 
   return (
-    <div className="game-container">
+    <div>
       <h1>Snake Game</h1>
       <div className="game" style={{ display: 'grid', gridTemplateColumns: 'repeat(20, 20px)', gridGap: '1px' }}>
         {[...Array(20)].map((_, y) => [...Array(20)].map((_, x) => (
-          <div key={`${x}-${y}`} style={{
-            width: '20px',
-            height: '20px',
-            backgroundColor: snake.find(segment => segment.x === x && segment.y === y) ? 'green' : food.x === x && food.y === y ? 'red' : 'lightgrey',
-          }}> <div className={!isPaused ? 'food' : ''}>{(food.x === x && food.y === y) && foodType}</div></div>
+          <div
+            key={`${x}-${y}`}
+            style={{
+              width: '20px',
+              height: '20px',
+              backgroundColor: snake.find(segment => segment.x === x && segment.y === y) ? 'green' : food.x === x && food.y === y ? 'red' : 'lightgrey',
+            }}
+          >
+            <div className={!isPaused ? 'food' : ''}>{food.x === x && food.y === y && foodType}</div>
+          </div>
         )))}
       </div>
       <p>Score: {score}</p>
       <p>Speed: {showSpeed}</p>
       {isPaused ? (
-        <button onClick={startGame}>Start Game</button>) : (<button onClick={() => setIsPaused(!isPaused)}>Pause</button>)}
-
+        <button onClick={startGame}>Start Game</button>
+      ) : (
+        <button onClick={() => setIsPaused(!isPaused)}>Pause</button>
+      )}
     </div>
   );
 };
 
 export default SnakeGame;
-

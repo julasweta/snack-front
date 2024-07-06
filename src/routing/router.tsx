@@ -1,11 +1,11 @@
-import { Navigate, createBrowserRouter } from "react-router-dom";
+import { Navigate,  createHashRouter } from "react-router-dom";
 import { MainLayout } from "../layouts/MainLayout";
 import { AppRoutes } from "./AppRoutes";
 import Error404 from "../components/Error404";
 import SnakeGame from "../components/SnakeGame";
 import LoginForm from "../components/LoginForm";
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     path: "/",
     element: <MainLayout />,
